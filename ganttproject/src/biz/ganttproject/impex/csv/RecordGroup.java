@@ -18,18 +18,17 @@ along with GanttProject.  If not, see <http://www.gnu.org/licenses/>.
 */
 package biz.ganttproject.impex.csv;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+import net.sourceforge.ganttproject.GPLogger;
+import net.sourceforge.ganttproject.util.collect.Pair;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-
-import net.sourceforge.ganttproject.GPLogger;
-import net.sourceforge.ganttproject.util.collect.Pair;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 
 /**
  * Record group is a set of homogeneous CSV records. CSV file consists of a few
@@ -46,13 +45,13 @@ public abstract class RecordGroup {
   private final String myName;
   private List<Pair<Level, String>> myErrorOutput;
 
-  public RecordGroup(String name, Set<String> fields) {
+  RecordGroup(String name, Set<String> fields) {
     myName = name;
     myFields = fields;
     myMandatoryFields = fields;
   }
 
-  public RecordGroup(String name, Set<String> regularFields, Set<String> mandatoryFields) {
+  RecordGroup(String name, Set<String> regularFields, Set<String> mandatoryFields) {
     myName = name;
     myFields = regularFields;
     myMandatoryFields = mandatoryFields;
@@ -60,7 +59,7 @@ public abstract class RecordGroup {
 
   boolean isHeader(SpreadsheetRecord record) {
     Set<String> thoseFields = Sets.newHashSet();
-    for (Iterator<String> it = record.iterator(); it.hasNext();) {
+    for (Iterator<String> it = record.iterator(); it.hasNext(); ) {
       thoseFields.add(it.next());
     }
     return thoseFields.containsAll(myMandatoryFields);
@@ -69,7 +68,7 @@ public abstract class RecordGroup {
   boolean process(SpreadsheetRecord record) {
     assert record.size() > 0;
     boolean allEmpty = true;
-    for (Iterator<String> it = record.iterator(); it.hasNext();) {
+    for (Iterator<String> it = record.iterator(); it.hasNext(); ) {
       if (!Strings.isNullOrEmpty(it.next())) {
         allEmpty = false;
         break;
@@ -109,18 +108,19 @@ public abstract class RecordGroup {
     return (myHeader != null);
   }
 
-  protected void postProcess() {}
+  protected void postProcess() {
+  }
 
   public void setHeader(List<String> header) {
     myHeader = header;
     myCustomFields = Sets.difference(Sets.newHashSet(header), myFields);
   }
 
-  public List<String> getHeader() {
+  List<String> getHeader() {
     return myHeader;
   }
 
-  protected Collection<String> getCustomFields() {
+  Collection<String> getCustomFields() {
     return myCustomFields;
   }
 
@@ -133,7 +133,15 @@ public abstract class RecordGroup {
     myErrorOutput = errors;
   }
 
-  protected void addError(Level level, String message) {
-    myErrorOutput.add(Pair.create(level, message));
+  protected List<Pair<Level, String>> getErrorOutput() {
+    return myErrorOutput;
+  }
+
+  void addError(Level level, String message) {
+    addError(myErrorOutput, level, message);
+  }
+
+  static void addError(List<Pair<Level, String>> output, Level level, String message) {
+    output.add(Pair.create(level, message));
   }
 }

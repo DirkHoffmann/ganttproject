@@ -21,10 +21,12 @@ package biz.ganttproject.impex.csv;
 import biz.ganttproject.core.model.task.TaskDefaultColumn;
 import biz.ganttproject.core.option.BooleanOption;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.sourceforge.ganttproject.CustomProperty;
@@ -43,6 +45,7 @@ import net.sourceforge.ganttproject.task.ResourceAssignment;
 import net.sourceforge.ganttproject.task.Task;
 import net.sourceforge.ganttproject.task.TaskManager;
 import net.sourceforge.ganttproject.task.TaskProperties;
+import net.sourceforge.ganttproject.util.ColorConvertion;
 import net.sourceforge.ganttproject.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 
@@ -82,7 +85,6 @@ public class GanttCSVExport {
     myCsvOptions = Preconditions.checkNotNull(csvOptions);
   }
 
-
   private CSVFormat getCSVFormat() {
     CSVFormat format = CSVFormat.DEFAULT.withEscape('\\');
     if (myCsvOptions.sSeparatedChar.length() == 1) {
@@ -110,7 +112,7 @@ public class GanttCSVExport {
 
 
   private SpreadsheetWriter getCsvWriter(OutputStream stream) throws IOException {
-    return new CsvWriterImpl(stream, getCSVFormat());
+    return new CsvWriterImpl(stream, getCSVFormat(), myCsvOptions.getBomOption().getValue());
   }
 
   private SpreadsheetWriter getXlsWriter(OutputStream stream) {
@@ -138,6 +140,9 @@ public class GanttCSVExport {
         writer.print(i18n(entry.getKey()));
       } else {
         writer.print(defaultColumn.getName());
+        if (defaultColumn == TaskDefaultColumn.RESOURCES) {
+          writer.print(TaskRecords.TaskFields.ASSIGNMENTS.toString());
+        }
       }
     }
     for (CustomPropertyDefinition def : defs) {
@@ -201,9 +206,17 @@ public class GanttCSVExport {
               break;
             case RESOURCES:
               writer.print(getAssignments(task));
+              writer.print(buildAssignmentSpec(task));
               break;
             case COST:
               writer.print(task.getCost().getValue().toPlainString());
+              break;
+            case COLOR:
+              if (!Objects.equal(task.getColor(), task.getManager().getTaskDefaultColorOption().getValue())) {
+                writer.print(ColorConvertion.getColor(task.getColor()));
+              } else {
+                writer.print("");
+              }
               break;
             case INFO:
             case PRIORITY:
@@ -344,4 +357,14 @@ public class GanttCSVExport {
     }
     return res.toString();
   }
+
+  private String buildAssignmentSpec(Task task) {
+    List<String> loads = Lists.newArrayList();
+    for (ResourceAssignment ra : task.getAssignments()) {
+      loads.add(String.format("%d:%.2f", ra.getResource().getId(), ra.getLoad()));
+    }
+    return Joiner.on(';').join(loads);
+  }
+
+
 }

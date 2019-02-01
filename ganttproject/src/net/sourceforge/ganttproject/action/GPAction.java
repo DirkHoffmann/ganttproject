@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package net.sourceforge.ganttproject.action;
 
 import com.google.common.base.Strings;
+import net.sourceforge.ganttproject.DesktopIntegration;
 import net.sourceforge.ganttproject.language.GanttLanguage;
 import net.sourceforge.ganttproject.language.GanttLanguage.Event;
 import net.sourceforge.ganttproject.util.PropertiesUtil;
@@ -57,12 +58,12 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     }
   }
 
-  public static final int MENU_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+  /**
+   * Location of the icon files
+   */
+  private static final String ICON_FILE_DIRECTORY = "/icons";
 
-  /** Location of the icon files */
-  public static final String ICON_FILE_DIRECTORY = "/icons";
-
-  protected boolean iconVisible = true;
+  private boolean iconVisible = true;
 
   private final String myName;
 
@@ -136,7 +137,7 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     }
   }
 
-  protected final Icon createIcon(String iconSize) {
+  private final Icon createIcon(String iconSize) {
     if (iconSize == null || false == iconVisible) {
       return null;
     }
@@ -151,14 +152,15 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     return resource == null ? null : new ImageIcon(resource);
   }
 
-  public static final Icon getIcon(String iconSize, String iconFileName) {
+  public static Icon getIcon(String iconSize, String iconFileName) {
     URL resource = GPAction.class.getResource(MessageFormat.format("{0}/{1}x{1}/{2}", ICON_FILE_DIRECTORY, iconSize, iconFileName));
     return resource == null ? null : new ImageIcon(resource);
 
   }
+
   /**
    * @return translation of "ID.description" if available, otherwise translation
-   *         of "ID"
+   * of "ID"
    */
   protected String getLocalizedDescription() {
     if (getID() == null) {
@@ -171,7 +173,9 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     return description == null ? "" : description;
   }
 
-  /** @return translation of ID */
+  /**
+   * @return translation of ID
+   */
   protected String getLocalizedName() {
     return getID() == null ? null : getI18n(getID());
   }
@@ -293,7 +297,7 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     return result;
   }
 
-  public static KeyStroke getKeyStroke(String keystrokeID) {
+  private static KeyStroke getKeyStroke(String keystrokeID) {
     String keystrokeText = getKeyStrokeText(keystrokeID);
     if (keystrokeText == null) {
       return null;
@@ -318,7 +322,12 @@ public abstract class GPAction extends AbstractAction implements GanttLanguage.L
     if (ourKeyboardProperties == null) {
       ourKeyboardProperties = new Properties();
       PropertiesUtil.loadProperties(ourKeyboardProperties, "/keyboard.properties");
-      PropertiesUtil.loadProperties(ourKeyboardProperties, "/mouse.properties");
+      if (DesktopIntegration.isMacOs()) {
+        PropertiesUtil.loadProperties(ourKeyboardProperties, "/mouse.macos.properties");
+        PropertiesUtil.loadProperties(ourKeyboardProperties, "/keyboard.macos.properties");
+      } else {
+        PropertiesUtil.loadProperties(ourKeyboardProperties, "/mouse.properties");
+      }
     }
     return (String) ourKeyboardProperties.get(keystrokeID);
   }

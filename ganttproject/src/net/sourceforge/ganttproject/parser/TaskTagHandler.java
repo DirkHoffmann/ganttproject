@@ -18,34 +18,32 @@ along with GanttProject.  If not, see <http://www.gnu.org/licenses/>.
  */
 package net.sourceforge.ganttproject.parser;
 
-import java.awt.Color;
+import biz.ganttproject.core.chart.render.ShapePaint;
+import biz.ganttproject.core.time.GanttCalendar;
+import com.google.common.base.Charsets;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import net.sourceforge.ganttproject.GPLogger;
+import net.sourceforge.ganttproject.gui.TaskTreeUIFacade;
+import net.sourceforge.ganttproject.task.Task;
+import net.sourceforge.ganttproject.task.TaskManager;
+import net.sourceforge.ganttproject.task.TaskManager.TaskBuilder;
+import org.xml.sax.Attributes;
+
+import java.awt.*;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 
-import net.sourceforge.ganttproject.GPLogger;
-import net.sourceforge.ganttproject.gui.TaskTreeUIFacade;
-import net.sourceforge.ganttproject.task.Task;
-import net.sourceforge.ganttproject.task.TaskManager;
-import net.sourceforge.ganttproject.task.TaskManager.TaskBuilder;
-
-import org.xml.sax.Attributes;
-
-import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import biz.ganttproject.core.chart.render.ShapePaint;
-import biz.ganttproject.core.time.GanttCalendar;
-
 public class TaskTagHandler extends AbstractTagHandler implements ParsingListener {
   private final ParsingContext myContext;
   private final TaskManager myManager;
   private final TaskTreeUIFacade myTreeFacade;
   private final Map<Integer, Boolean> myTaskIdToExpansionState = Maps.newHashMap();
+
   public TaskTagHandler(TaskManager mgr, ParsingContext context, TaskTreeUIFacade treeFacade) {
     super("task");
     myManager = mgr;
@@ -116,10 +114,6 @@ public class TaskTagHandler extends AbstractTagHandler implements ParsingListene
     Task task = builder.build();
 
     myTaskIdToExpansionState.put(task.getTaskID(), task.getExpand());
-//    String newMilestone = attrs.getValue("milestone");
-//    if ("1".equals(newMilestone)) {
-//      task.setMilestone(true);
-//    }
     String project = attrs.getValue("project");
     if (project != null) {
       task.setProjectTask(true);
@@ -181,7 +175,7 @@ public class TaskTagHandler extends AbstractTagHandler implements ParsingListene
     String shape = attrs.getValue("shape");
     if (shape != null) {
       java.util.StringTokenizer st1 = new java.util.StringTokenizer(shape, ",");
-      int[] array = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+      int[] array = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       String token = "";
       int count = 0;
       while (st1.hasMoreTokens()) {
@@ -216,7 +210,7 @@ public class TaskTagHandler extends AbstractTagHandler implements ParsingListene
     List<Task> tasksBottomUp = Lists.reverse(myManager.getTaskHierarchy().breadthFirstSearch(null, false));
 
     for (Task t : tasksBottomUp) {
-      myTreeFacade.setExpanded(t, Objects.firstNonNull(myTaskIdToExpansionState.get(t.getTaskID()), Boolean.TRUE));
+      myTreeFacade.setExpanded(t, MoreObjects.firstNonNull(myTaskIdToExpansionState.get(t.getTaskID()), Boolean.TRUE));
     }
   }
 }
